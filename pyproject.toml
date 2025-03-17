@@ -1,0 +1,65 @@
+[project]
+name = "big-query-agent-optimizer"
+version = "2023.11.21"
+requires-python = ">=3.11"
+dependencies = [
+    "ruff==0.7.4",
+    "pre_commit==4.0.1"
+]
+authors = []
+description = ""
+readme = "README.md"
+
+[tool.ruff]
+line-length = 100
+select = [
+    "C",  # mccabe rules
+    "F",  # pyflakes rules
+    "E",  # pycodestyle error rules
+    "W",  # pycodestyle warning rules
+    "B",  # flake8-bugbear rules
+    "I",  # isort rules
+]
+ignore = [
+    "C901",  # max-complexity-10
+    "E501",  # line-too-long
+
+    # remove later
+    "F405", # star-imports
+    "F841", # variable-not-used
+    "F403", # undefined-names
+    "F401", # unused-imports
+    "I001", # import-unsorted
+    "F541",
+    "B024",
+    "B006"
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.numpydoc_validation]
+checks = [
+    "all",  # report on all checks
+    "ES01", # but don't require an extended summary
+    "EX01", # or examples
+    "SA01", # or a see also section
+    "SS06", # and don't require the summary to fit on one line
+]
+exclude = [  # don't report on checks for these
+    '\.__init__$',
+    '\.__repr__$',
+    '\.__str__$',
+]
+override_SS05 = [  # allow docstrings to start with these words
+    '^Process ',
+    '^Assess ',
+    '^Access ',
+]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
