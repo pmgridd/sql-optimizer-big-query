@@ -61,8 +61,8 @@ class SqlAnalyzer:
                 line = line.strip()
                 if line.startswith("- "):
                     suggestions.append(line[2:])
-            return {"suggestions": msg.content}
+            return {"improvements": [msg.content]}
 
         except Exception as e:
             print(f"Error getting suggestions: {str(e)}")
-            return {"suggestions": []}
+            return {"improvements": []}

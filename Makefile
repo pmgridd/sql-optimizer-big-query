@@ -22,3 +22,9 @@ docker-build-local:
 
 docker-run-local:
 	@docker run -p 8880:8880 --env-file .env langgraph_demo
+
+dbl:
+	@docker build -t langgraph_demo -f docker/Dockerfile .
+
+drl:
+	@docker run -p 8880:8880 --env-file .env langgraph_demo

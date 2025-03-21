@@ -6,38 +6,80 @@
     <title>SQL Query Analyzer</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; }
-        textarea { width: 100%; height: 100px; }
-        button { margin-top: 10px; padding: 10px; }
-        .results { margin-top: 20px; }
-        .results pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+        }
+        .result_container {
+            max-width: 1000px;
+            margin: auto;
+            text-align: center;
+        }
+        .result {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .result img {
+            max-width: 500px;
+            max-height: 500px;
+            border: 1px solid #ccc;
+        }
+        input {
+            padding: 10px;
+            width: calc(100% - 20px);
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        pre {
+            white-space: pre-wrap; /* Allows wrapping of long lines */
+            word-wrap: break-word; /* Breaks long words if necessary */
+            background-color: #f0f0f0; /* Light background for readability */
+            padding: 10px;
+            font-family: monospace; /* Monospace font for consistent spacing */
+            overflow-x: auto; /* Adds horizontal scroll if content overflows */
+        }
     </style>
 </head>
 <body>
-
-    <h2>SQL Query Analyzer</h2>
-    {% if image_base64 %}
-        <img src="data:image/png;base64,{{ image_base64 }}" alt="LangGraph Workflow">
-    {% endif %}
-    <textarea id="sql_query" placeholder="Write your SQL query here..." value="select * from adp_rnd_dwh_performance.catalog_sales s inner join adp_rnd_dwh_performance.call_center c on s.id = c.id where apg is null;"></textarea>
-    <button onclick="">Analyze Query</button>
-
+    <div class="container">
+        <h2>SQL Query Analyzer</h2>
+        {% if image_base64 %}
+            <img src="data:image/png;base64,{{ image_base64 }}" alt="LangGraph Workflow">
+        {% endif %}
+        <input type="text" id="textSQLInput" placeholder="Write your SQL query here..." value="select * from adp_rnd_dwh_performance.catalog_sales s inner join adp_rnd_dwh_performance.call_center c on s.id = c.id where apg is null;" />
+        <button  onclick="getImprovementGET()">Analyze SQL</button>
+    </div>
     <div class="results">
-        <h3>SQL Suggestions:</h3>
-        <pre id="suggestions"></pre>
-
-        <h3>SQL Improvements:</h3>
-        <pre id="improvements"></pre>
-
-        <h3>Performance Test:</h3>
-        <pre id="performance"></pre>
-
-        <h3>Optimized SQL:</h3>
-        <pre id="optimized_sql"></pre>
+        <div class="result_container" id="results"></div>
     </div>
 
     <script>
-
+        async function getImprovementGET() {
+            const textSQLInput = document.getElementById('textSQLInput').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = "Loading...";
+            try {
+                const response = await fetch(`/analyze?sql=${encodeURIComponent(textSQLInput)}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    resultsDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                    return; // Exit the function
+                }
+                const data = await response.json();
+                resultsDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error fetching results.</p>`;
+            }
+        }
     </script>
 
 </body>
