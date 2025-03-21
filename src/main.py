@@ -79,19 +79,6 @@ def analyze():
 
 
 def main():
-    # sql = SqlImprovementState(sql="select * from adp_rnd_dwh_performance.catalog_sales s inner join adp_rnd_dwh_performance.call_center c on s.id = c.id where apg is null;")
-
-    # res = sql_analyzer.get_table_info(sql)
-    # sql = sql | res
-
-    # res = sql_analyzer.generate_info(sql)
-    # sql = sql | res
-
-    # res = sql_analyzer.get_suggestions(sql)
-    # sql = sql | res
-
-    # print(print(json.dumps(sql, indent=4)))
-
     app.run(debug=True, port=8880, host="0.0.0.0")
 
 
