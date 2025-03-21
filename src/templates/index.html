@@ -16,8 +16,11 @@
 <body>
 
     <h2>SQL Query Analyzer</h2>
+    {% if image_base64 %}
+        <img src="data:image/png;base64,{{ image_base64 }}" alt="LangGraph Workflow">
+    {% endif %}
     <textarea id="sql_query" placeholder="Write your SQL query here..." value="select * from adp_rnd_dwh_performance.catalog_sales s inner join adp_rnd_dwh_performance.call_center c on s.id = c.id where apg is null;"></textarea>
-    <button onclick="analyzeSQL()">Analyze Query</button>
+    <button onclick="">Analyze Query</button>
 
     <div class="results">
         <h3>SQL Suggestions:</h3>
@@ -34,26 +37,7 @@
     </div>
 
     <script>
-        function analyzeSQL() {
-            let query = $("#sql_query").val();
 
-            $.post("/analyze", { sql_query: query }, function(response) {
-                if (response.error) {
-                    alert(response.error);
-                    return;
-                }
-                console.log(response)
-                $("#suggestions").text(response.suggestions.join("\n"));
-                $("#improvements").text(response.improvements.join("\n"));
-
-                let perfResult = response.performance;
-                let perfText = perfResult.error
-                    ? "Error: " + perfResult.error
-                    : "Execution Time: " + perfResult.execution_time.toFixed(6) + " sec\nResult: " + JSON.stringify(perfResult.result);
-
-                $("#performance").text(perfText);
-            });
-        }
     </script>
 
 </body>

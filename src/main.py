@@ -12,6 +12,8 @@ import json
 from langgraph.graph import StateGraph, START, END
 from IPython.display import Image, display
 from src.models import SqlImprovementState, SchemaInfo
+import base64
+from io import BytesIO
 
 
 credentials = setup_airplatform()
@@ -43,17 +45,14 @@ workflow.add_conditional_edges(
 workflow.add_edge("antipatterns", "suggestions")
 workflow.add_edge("suggestions", END)
 chain = workflow.compile()
-display(Image(chain.get_graph().draw_mermaid_png()))
-
-
-class SqlImprovementState(TypedDict):
-    sql: str
-    improvements: list[dict]
 
 
 @app.route("/", methods=["GET", "POST"])
-def home():
-    return render_template("index.html")
+def index():
+    graph_image = chain.get_graph().draw_mermaid_png()
+    image_base64 = base64.b64encode(graph_image).decode("utf-8")
+
+    return render_template("index.html", image_base64=image_base64)
 
 
 @app.route("/analyze", methods=["POST"])

@@ -14,5 +14,11 @@ dev-setup: ## Installs the development environment and pre-commit hooks
 	pipenv install --dev && \
 	pipenv run pre-commit install  # Install pre-commit hooks
 
-run-local: 
+run-local:
 	@pipenv run python -m src.main
+
+docker-build-local:
+	@docker build -t langgraph_demo -f docker/Dockerfile .
+
+docker-run-local:
+	@docker run -p 8880:8880 --env-file .env langgraph_demo
