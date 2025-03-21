@@ -48,6 +48,9 @@ class SqlAnalyzer:
             antipatterns.append(current_pattern)
         return {"antipattterns": antipatterns}
 
+    def get_previous_optimizations(self, state: SqlImprovementState) -> SqlImprovementState:
+        return {}
+
     def get_suggestions(self, state: SqlImprovementState) -> SqlImprovementState:
         """Get optimization suggestions using a focused prompt."""
         try:
@@ -66,3 +69,9 @@ class SqlAnalyzer:
         except Exception as e:
             print(f"Error getting suggestions: {str(e)}")
             return {"improvements": []}
+
+    def get_optimized_query(self, state: SqlImprovementState) -> SqlImprovementState:
+        return {}
+
+    def loca_performance_test(self, state: SqlImprovementState) -> SqlImprovementState:
+        return {}
