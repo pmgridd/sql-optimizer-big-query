@@ -1,0 +1,27 @@
+from typing_extensions import TypedDict
+from typing import Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class ColumnInfo(TypedDict):
+    column_name: str
+    column_type: str
+
+
+@dataclass
+class SchemaInfo(TypedDict):
+    """Contains table schema and statistics information."""
+
+    table_name: str
+    columns: list[ColumnInfo]
+    row_count: Optional[int] = None
+    size_bytes: Optional[int] = None
+
+
+@dataclass
+class SqlImprovementState(TypedDict):
+    sql: str
+    tabels: list[SchemaInfo]
+    antipattterns: list[dict]
+    improvements: list[str]
