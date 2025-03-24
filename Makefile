@@ -17,6 +17,9 @@ dev-setup: ## Installs the development environment and pre-commit hooks
 run-local:
 	@pipenv run python -m src.main
 
+run-local-streaming:
+	@pipenv run python -m src.main_streaming_example
+
 docker-build-local:
 	@docker build -t langgraph_demo -f docker/Dockerfile .
 

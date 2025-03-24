@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph Streaming UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; }
+        input { padding: 5px; width: 80%; }
+        button { padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>LangGraph Streaming UI</h1>
+    <div id="messages"></div>
+    <input type="text" id="input" placeholder="Enter input">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const ws = new WebSocket("ws://127.0.0.1:8880/ws");
+        const messagesDiv = document.getElementById("messages");
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const message = document.createElement("div");
+            message.textContent = `${data.node}: ${data.message}`;
+            messagesDiv.appendChild(message);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+
+        function sendMessage() {
+            const input = document.getElementById("input");
+            if (input.value.trim()) {
+                ws.send(JSON.stringify({ message: input.value }));
+                input.value = "";
+            }
+        }
+    </script>
+</body>
+</html>
