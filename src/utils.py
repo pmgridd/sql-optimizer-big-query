@@ -5,7 +5,10 @@ import json
 
 
 def get_table_schema_prompt(query: str) -> str:
-    prompt = f"""Extract all table names from the following SQL query. Return the table names as a comma-separated list.
+    prompt = f"""
+Extract all table names from the following SQL query.
+Return the fully-qualified table names in the format 'project.dataset.table_id' as a comma-separated list.
+If no tables found - return 'no_tables_found'.
 
 SQL Query: {query}
 
@@ -64,8 +67,7 @@ def get_suggestions_prompt(
         schema_context = ""
     if antipatterns is not None:
         antipatterns_str = [
-            f"{ap.get('code', 'UNKNOWN')}: {ap.get('name', '')} - {ap.get('description', '')} (Impact: {ap.get('impact', 'Unknown')})"
-            for ap in antipatterns
+            f"{ap.get('code', 'UNKNOWN')}: {ap.get('name', '')}" for ap in antipatterns
         ]
         antipatterns_prompt = "The query contains the following antipatterns:\n" + "\n".join(
             antipatterns_str
@@ -86,9 +88,46 @@ Query to analyze:
 {antipatterns_prompt}
 
 """.lstrip()
+    return suggestion_prompt
 
-    print()
-    print(suggestion_prompt)
-    print()
 
-    return antipatterns_prompt
+def get_optimized_sql_prompt(
+    query: str, antipatterns: list[str] = None, schema_info: Optional[list[SchemaInfo]] = None
+) -> str:
+    schema_context = ""
+    if schema_info:
+        for info in schema_info:
+            schema_context += (
+                f"The Query uses the following Table\n"
+                f"Table: {info['table_name']}\n"
+                f"Row Count: {info['row_count']}\n"
+                f"Table Size in Bytes: {info['size_bytes']}\n"
+                "| COLUMN_NAME | COLUMN_TYPE |\n"
+                "| ----------- | ----------- |\n"
+            )
+            for column in info["columns"]:
+                schema_context += f"| {column['column_name']} | {column['column_type']} |\n"
+    else:
+        schema_context = ""
+    if antipatterns is not None:
+        antipatterns_str = [
+            f"{ap.get('code', 'UNKNOWN')}: {ap.get('name', '')}" for ap in antipatterns
+        ]
+        antipatterns_prompt = "The query contains the following antipatterns:\n" + "\n".join(
+            antipatterns_str
+        )
+    else:
+        antipatterns_prompt = ""
+    suggestion_prompt = f"""
+Analyze this SQL query and provide optimized SQL based on antipatterns and provided table information.
+Query to analyze:
+    {query}
+
+{antipatterns_prompt}
+
+{schema_context.lstrip()}
+
+Provide optimized SQL in the form of new SQL query, no comments and old version of the query is needed:
+""".lstrip()
+
+    return suggestion_prompt

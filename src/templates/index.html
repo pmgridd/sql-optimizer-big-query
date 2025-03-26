@@ -18,7 +18,7 @@
         .result_container {
             max-width: 1000px;
             margin: auto;
-            text-align: center;
+            /* text-align: center; */
         }
         .result {
             display: flex;
@@ -52,30 +52,61 @@
 <body>
     <div class="container">
         <h2>SQL Query Analyzer</h2>
-        {% if image_base64 %}
-            <img src="data:image/png;base64,{{ image_base64 }}" alt="LangGraph Workflow">
-        {% endif %}
-        <input type="text" id="textSQLInput" placeholder="Write your SQL query here..." value="select * from adp_rnd_dwh_performance.catalog_sales s inner join adp_rnd_dwh_performance.call_center c on s.id = c.id where apg is null;" />
+        <!-- <input type="text" id="textSQLInput" placeholder="Write your SQL query here..." value="select * from gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.customer c CROSS join gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales s WHERE c.c_customer_sk = s.cs_ship_customer_sk limit 1" /> -->
+        <textarea style="min-width: 700px; min-height: 120px;" id="textSQLInput" placeholder="Write your SQL query here...">select * from gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.customer c CROSS join gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales s WHERE c.c_customer_sk = s.cs_ship_customer_sk limit 1</textarea>
         <button  onclick="getImprovementGET()">Analyze SQL</button>
     </div>
     <div class="results">
         <div class="result_container" id="results"></div>
     </div>
-
+    <div class="container">
+        {% if image_base64 %}
+            <h2>Agents Graph</h2>
+            <img src="data:image/png;base64,{{ image_base64 }}" alt="LangGraph Workflow">
+        {% endif %}
+    </div>
     <script>
         async function getImprovementGET() {
             const textSQLInput = document.getElementById('textSQLInput').value;
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = "Loading...";
+            resultsDiv.innerHTML = `<div class="container"><h3><p style="color: red;">Loading...</p></h3></div>`;
             try {
                 const response = await fetch(`/analyze?sql=${encodeURIComponent(textSQLInput)}`);
                 if (!response.ok) {
                     const errorData = await response.json();
-                    resultsDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                    resultsDiv.innerHTML = `<div class="container"><h3><p style="color: red;">${errorData.error}</p></h3></div>`;
                     return; // Exit the function
                 }
                 const data = await response.json();
-                resultsDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`
+                resultsDiv.innerHTML = `
+                    <h3>Optimized SQL:</h3>
+                    <pre>${data.optimized_sql}</pre>
+
+                    <h3>Detected Anti-patterns:</h3>
+                    ${data.antipattterns.length > 0
+                        ? data.antipattterns.map(pattern => `
+                            <div style="border-left: 4px solid red; padding: 10px; margin: 10px 0; background: #ffe6e6;">
+                                <strong>${pattern.name} (${pattern.code})</strong>
+                                <p><em>Impact:</em> ${pattern.impact}</p>
+                                <p><em>Location:</em> ${pattern.location}</p>
+                                <p><em>Description:</em> ${pattern.description}</p>
+                                <p><strong>Suggestion:</strong> ${pattern.suggestion}</p>
+                            </div>
+                        `).join('') : '<p>No anti-patterns detected.</p>'}
+
+                    <h3>Suggestions:</h3>
+                    ${data.improvements.length > 0
+                        ? data.improvements.map(sugestion => `
+                            <div style="border-left: 4px solid red; padding: 10px; margin: 10px 0; background: #ffe6e6;">
+                                <strong>${sugestion}</strong>
+                            </div>
+                        `).join('') : '<p>No suggestions generated.</p>'}
+
+                   <h3>Query results:</h3>
+                   <p>${JSON.stringify(data.sql_res, null, 2)}</p>
+                   <p>${JSON.stringify(data.optimized_sql_res, null, 2)}</p>
+
+                `
             } catch (error) {
                 resultsDiv.innerHTML = `<p style="color: red;">Error fetching results.</p>`;
             }

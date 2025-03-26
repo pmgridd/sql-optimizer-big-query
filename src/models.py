@@ -25,3 +25,7 @@ class SqlImprovementState(TypedDict):
     tabels: list[SchemaInfo]
     antipattterns: list[dict]
     improvements: list[str]
+    optimized_sql: str
+    sql_res: dict
+    optimized_sql_res: dict
+    error: Optional[str]
