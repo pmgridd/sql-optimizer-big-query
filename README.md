@@ -46,3 +46,37 @@ lock file (`Pipfile.lock`) to the repository
 pipenv lock
 git add Pipfile.lock
 ```
+
+## Queries to test
+
+### 1. Not Optimized query 1 (subqueries instead of window function)
+
+```sql
+SELECT
+    c.c_customer_sk,
+    s.cs_sold_date_sk,
+    s.cs_net_paid,
+    (SELECT SUM(cs_net_paid)
+     FROM `gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales` AS inner_s
+     WHERE inner_s.cs_ship_customer_sk = c.c_customer_sk AND inner_s.cs_sold_date_sk <= s.cs_sold_date_sk) AS cumulative_spending,
+    (SELECT MAX(cs_sold_date_sk)
+     FROM `gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales` AS lag_s
+     WHERE lag_s.cs_ship_customer_sk = c.c_customer_sk AND lag_s.cs_sold_date_sk < s.cs_sold_date_sk) AS prev_purchase_date
+FROM
+    `gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.customer` AS c
+INNER JOIN
+    `gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales` AS s
+ON
+    c.c_customer_sk = s.cs_ship_customer_sk
+LIMIT 1
+```
+
+### 2. Not Optimized query 2 (cross join)
+```sql
+select * from gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.customer c CROSS join gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.catalog_sales s WHERE c.c_customer_sk = s.cs_ship_customer_sk limit 1
+```
+
+### 3. Not Optimized query 3 (cross join)
+```sql
+select * from gd-gcp-rnd-analytical-platform.adp_rnd_dwh_performance.customer limit 1
+```
