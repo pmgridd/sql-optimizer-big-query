@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def setup_airplatform():
+def setup_aiplatform():
     GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     if json.loads(GOOGLE_APPLICATION_CREDENTIALS)["type"] == "authorized_user":
         with open("credentials.json", "w") as file:

@@ -1,6 +1,6 @@
-from src.constants import SQL_ANTIPATTERNS
+from src.common.constants import SQL_ANTIPATTERNS
 from typing import Optional
-from src.models import SqlImprovementState, SchemaInfo
+from src.common.models import SqlImprovementState, SchemaInfo
 import json
 
 
@@ -47,7 +47,7 @@ Query to analyze:
 
 
 def get_suggestions_prompt(
-    query: str, antipatterns: list[str] = None, schema_info: Optional[list[SchemaInfo]] = None
+    query: str, antipatterns: list[dict] = None, schema_info: Optional[list[SchemaInfo]] = None
 ) -> str:
     schema_context = ""
     if schema_info:
@@ -92,7 +92,7 @@ Query to analyze:
 
 
 def get_optimized_sql_prompt(
-    query: str, antipatterns: list[str] = None, schema_info: Optional[list[SchemaInfo]] = None
+    query: str, antipatterns: list[dict] = None, schema_info: Optional[list[SchemaInfo]] = None
 ) -> str:
     schema_context = ""
     if schema_info:
@@ -131,3 +131,20 @@ Provide optimized SQL in the form of new SQL query, no comments and old version 
 """.lstrip()
 
     return suggestion_prompt
+
+
+def evaluate_query(results: dict) -> dict:
+    score = 0
+    weights = {
+        "execution_time_seconds": 0.40,
+        "total_bytes_processed": 0.30,
+        "total_bytes_billed": 0.15,
+        "cache_hit": 0.10,
+        "num_dml_affected_rows": 0.05,
+    }
+    score += (1 / (1 + results["execution_time_seconds"])) * weights["execution_time_seconds"]
+    score += (1 / (1 + results["total_bytes_processed"])) * weights["total_bytes_processed"]
+    score += (1 / (1 + results["total_bytes_billed"])) * weights["total_bytes_billed"]
+    score += (1 if results["cache_hit"] else 0) * weights["cache_hit"]
+    score += (results["num_dml_affected_rows"] / 1000) * weights["num_dml_affected_rows"]
+    return {"score": score, "metadata": results}

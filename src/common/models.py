@@ -22,8 +22,8 @@ class SchemaInfo(TypedDict):
 @dataclass
 class SqlImprovementState(TypedDict):
     sql: str
-    tabels: list[SchemaInfo]
-    antipattterns: list[dict]
+    tables: list[SchemaInfo]
+    antipatterns: list[dict]
     improvements: list[str]
     optimized_sql: str
     sql_res: dict

@@ -1,19 +1,15 @@
-import os
-import logging
-from src.env_setup import *
-from langchain_core.messages import HumanMessage
-from typing_extensions import TypedDict
-from src.sql_analyzer import *
-from src.bq_client import BigQueryClient
+from src.common.env_setup import *
+from src.common.sql_analyzer import *
+from src.common.bq_client import BigQueryClient
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import RetryPolicy
-from src.models import SqlImprovementState, SchemaInfo
+from src.common.models import SqlImprovementState
 import base64
 from quart import Quart, render_template, request, jsonify
 import asyncio
 import signal
 
-credentials = setup_airplatform()
+credentials = setup_aiplatform()
 logger = logging.getLogger(__name__)
 llm = create_llm()
 bq_client = BigQueryClient(project_id=GCP_PROJECT, credentials=credentials)
@@ -100,7 +96,7 @@ async def main():
     # Register signals to shutdown gracefully
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
     for s in signals:
-        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown(loop, signal=s)))
+        loop.add_signal_handler(s, lambda s: asyncio.create_task(shutdown(loop, signal=s)))
     try:
         await app.run_task(debug=True, port=8880, host="0.0.0.0")
     finally:
