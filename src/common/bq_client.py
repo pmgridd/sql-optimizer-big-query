@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 import time
-from src.models import ColumnInfo, SchemaInfo
+from src.common.models import ColumnInfo, SchemaInfo
 import logging
 
 logger = logging.getLogger(__name__)

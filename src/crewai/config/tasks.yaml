@@ -1,0 +1,6 @@
+financial_analysis:
+  description: >
+    abc
+
+  expected_output: >
+    *structured output here*

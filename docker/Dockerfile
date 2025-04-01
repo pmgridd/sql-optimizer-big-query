@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir pipenv  \
 
 COPY ./src /app/src
 
-ENTRYPOINT ["python", "-m", "src.main"]
+ENTRYPOINT ["python", "-m", "src.crewai.main"]
