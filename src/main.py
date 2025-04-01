@@ -58,8 +58,10 @@ app.chain.retry_policy = RetryPolicy()
 
 @app.route("/", methods=["GET", "POST"])
 async def index():
-    graph_image = app.chain.get_graph().draw_mermaid_png()
-    image_base64 = base64.b64encode(graph_image).decode("utf-8")
+    # graph_image = app.chain.get_graph().draw_mermaid_png()
+    # graph_image = app.chain.get_graph().draw_png()
+    # image_base64 = base64.b64encode(graph_image).decode("utf-8")
+    image_base64 = None
     return await render_template("index.html", image_base64=image_base64)
 
 

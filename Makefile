@@ -21,13 +21,13 @@ run-local-streaming:
 	@pipenv run python -m src.main_streaming_example
 
 docker-build-local:
-	@docker build -t langgraph_demo -f docker/Dockerfile .
+	@docker build -t sql-optimization-agents:latest -f docker/Dockerfile .
 
 docker-run-local:
-	@docker run -p 8880:8880 --env-file .env langgraph_demo
+	@docker run -p 8880:8880 --env-file .env sql-optimization-agents:latest
 
 dbl:
-	@docker build -t langgraph_demo -f docker/Dockerfile .
+	@docker build -t sql-optimization-agents:latest -f docker/Dockerfile .
 
 drl:
-	@docker run -p 8880:8880 --env-file .env langgraph_demo
+	@docker run -p 8880:8880 --env-file .env sql-optimization-agents:latest
