@@ -46,11 +46,11 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag sql-optimization-agents:latest us-central1-docker.pkg.dev/gd-gcp-rnd-analytical-platform/adp-rnd-gcp:latest
+        docker tag sql-optimization-agents:latest us-central1-docker.pkg.dev/gd-gcp-rnd-analytical-platform/adp-rnd-gcp/sql-optimization-agents:latest
 
     - name: Push Docker Image to Artifact Registry
       run: |
-        docker push us-central1-docker.pkg.dev/gd-gcp-rnd-analytical-platform/adp-rnd-gcp:latest
+        docker push us-central1-docker.pkg.dev/gd-gcp-rnd-analytical-platform/adp-rnd-gcp/sql-optimization-agents:latest
 
     # - name: Deploy to Kubernetes (Optional - if desired)
     #   uses: appleboy/kubectl-action@v1.0.0
