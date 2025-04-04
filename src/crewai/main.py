@@ -5,6 +5,7 @@ from quart import Quart, request, jsonify
 from src.crewai.analyze_sql_flow import SqlAnalysisFlow
 from src.common.env_setup import *
 from src.crewai.sql_optimizer_crew import SqlAnalysisCrew
+from src.common.env_setup import setup_aiplatform
 
 
 credentials = setup_aiplatform()
@@ -24,6 +25,7 @@ async def analyze():
         final_output = await flow.kickoff_async()
         return jsonify(final_output)
     except Exception as e:
+        logger.exception(e)
         return jsonify({"error": str(e)}), 400
 
 
@@ -32,11 +34,11 @@ async def analyze_crew():
     sql = request.args.get("sql")
     if not sql or not sql.strip():
         return jsonify({"error": "SQL query cannot be empty!"}), 400
-
     try:
-        final_output = await SqlAnalysisCrew.crew().kickoff_async()
-        return jsonify(final_output)
+        crew_output = await SqlAnalysisCrew().crew().kickoff_async(inputs={"sql_query": sql})
+        return crew_output.pydantic.json()
     except Exception as e:
+        logger.exception(e)
         return jsonify({"error": str(e)}), 400
 
 
