@@ -18,7 +18,7 @@ class SqlAnalyzer:
         """First Improvement"""
 
         async def fetch_metadata(table):
-            return await asyncio.to_thread(self.bq_client.get_table_metadata, table)
+            return await asyncio.to_thread(self.bq_client.get_table_metadata_by_ref, table)
 
         msg = await self.llm.ainvoke(get_table_schema_prompt(state["sql"]))
         if "no_tables_found" not in msg.content.strip():
