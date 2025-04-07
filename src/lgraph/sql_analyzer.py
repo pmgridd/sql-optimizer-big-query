@@ -1,6 +1,11 @@
+from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 from src.common.utils import *
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.lgraph.models import SqlImprovementState
+from typing import Optional
+from dataclasses import dataclass
+from src.lgraph.models import SqlImprovementState, SchemaInfo
 from src.lgraph.bq_client import BigQueryClient
 import asyncio
 import logging
@@ -13,6 +18,23 @@ class SqlAnalyzer:
     def __init__(self, llm: ChatGoogleGenerativeAI, bq_client: BigQueryClient):
         self.llm = llm
         self.bq_client = bq_client
+        pass
+
+    def _evaluate_query(self, results: dict) -> dict:
+        score = 0
+        weights = {
+            "execution_time_seconds": 0.40,
+            "total_bytes_processed": 0.30,
+            "total_bytes_billed": 0.15,
+            "cache_hit": 0.10,
+            "num_dml_affected_rows": 0.05,
+        }
+        score += (1 / (1 + results["execution_time_seconds"])) * weights["execution_time_seconds"]
+        score += (1 / (1 + results["total_bytes_processed"])) * weights["total_bytes_processed"]
+        score += (1 / (1 + results["total_bytes_billed"])) * weights["total_bytes_billed"]
+        score += (1 if results["cache_hit"] else 0) * weights["cache_hit"]
+        score += (results["num_dml_affected_rows"] / 1000) * weights["num_dml_affected_rows"]
+        return {"score": score, "metadata": results}
 
     async def get_table_info(self, state: SqlImprovementState) -> SqlImprovementState:
         """First Improvement"""
@@ -25,7 +47,7 @@ class SqlAnalyzer:
             tables = await asyncio.gather(
                 *(fetch_metadata(table.strip()) for table in msg.content.split(","))
             )
-            return {"tabels": tables}
+            return {"tables": tables}
         else:
             raise RuntimeError("No tables found in the provided SQL query.")  # no retry by default
 
@@ -92,7 +114,7 @@ class SqlAnalyzer:
         if random.random() < 0.6:  # 60% chance of failure
             raise Exception("Simulated BigQuery query failure")  # retry 3 times by default
         res = self.bq_client.execute_sql_query(state["sql"])
-        return {"sql_res": evaluate_query(res)}
+        return {"sql_res": self._evaluate_query(res)}
 
     async def verify_and_run_optimized_sql(self, state: SqlImprovementState) -> SqlImprovementState:
         async def run_sql(sql):
