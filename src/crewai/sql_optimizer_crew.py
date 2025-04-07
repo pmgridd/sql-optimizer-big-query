@@ -1,7 +1,7 @@
 import os
 import json
 
-from src.common.models import (
+from src.crewai.models import (
     QueryStats,
     QueryInfo,
     QueryAnalysis,
@@ -9,7 +9,7 @@ from src.common.models import (
     BestQueryChoice,
     ImprovementsAnalysis,
 )
-from src.common.bq_client import BigQueryClient
+from src.crewai.bq_client import BigQueryClient
 from src.common.env_setup import GCP_PROJECT, setup_aiplatform
 from src.crewai.tools import sql_tools
 from crewai import Agent, Crew, Task, Process, LLM

@@ -1,9 +1,9 @@
 import signal
 import asyncio
+import logging
 
 from quart import Quart, request, jsonify
 from src.crewai.analyze_sql_flow import SqlAnalysisFlow
-from src.common.env_setup import *
 from src.crewai.sql_optimizer_crew import SqlAnalysisCrew
 from src.common.env_setup import setup_aiplatform
 

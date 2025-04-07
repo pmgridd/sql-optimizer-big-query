@@ -1,8 +1,8 @@
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from src.common.bq_client import BigQueryClient
-from src.common.models import QueryStats, SchemaInfo
+from src.crewai.bq_client import BigQueryClient
+from src.crewai.models import QueryStats, SchemaInfo
 from src.common.env_setup import GCP_PROJECT
 from typing import Type
 from pydantic import PrivateAttr

@@ -1,9 +1,9 @@
 from src.common.env_setup import *
-from src.common.sql_analyzer import *
-from src.common.bq_client import BigQueryClient
+from src.lgraph.sql_analyzer import *
+from src.lgraph.bq_client import BigQueryClient
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import RetryPolicy
-from src.common.models import SqlImprovementState
+from src.lgraph.models import SqlImprovementState
 import base64
 from quart import Quart, render_template, request, jsonify
 import asyncio

@@ -1,6 +1,6 @@
 from crewai.flow.flow import Flow, listen, start
 from src.common.env_setup import setup_aiplatform, GCP_PROJECT
-from src.common.bq_client import BigQueryClient
+from src.crewai.bq_client import BigQueryClient
 from src.common.utils import (
     get_table_schema_prompt,
     get_antipatterns_prompt,
@@ -9,7 +9,7 @@ from src.common.utils import (
     evaluate_query,
 )
 from crewai import LLM
-from src.common.sql_analyzer import SqlImprovementState
+from src.crewai.sql_analyzer import SqlImprovementState
 import logging
 import os
 import json
@@ -41,7 +41,9 @@ class SqlAnalysisFlow(Flow[SqlImprovementState]):
         msg = self.llm.call(get_table_schema_prompt(self.state["sql"]))
         logger.info(f"LLM response {msg}")
         if "no_tables_found" not in msg.strip():
-            tables = [self.bq_client.get_table_metadata(table.strip()) for table in msg.split(",")]
+            tables = [
+                self.bq_client.get_table_metadata_by_ref(table.strip()) for table in msg.split(",")
+            ]
             logger.info(f"Identified tables referenced in the query: {tables}")
             self.state["tables"] = tables
         else:

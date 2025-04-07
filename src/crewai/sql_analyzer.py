@@ -1,7 +1,7 @@
 from src.common.utils import *
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.common.models import SqlImprovementState
-from src.common.bq_client import BigQueryClient
+from src.crewai.models import SqlImprovementState
+from src.crewai.bq_client import BigQueryClient
 import asyncio
 import logging
 import random

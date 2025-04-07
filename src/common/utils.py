@@ -1,7 +1,6 @@
 from src.common.constants import SQL_ANTIPATTERNS
 from typing import Optional
-from src.common.models import SqlImprovementState, SchemaInfo
-import json
+from src.lgraph.models import SqlImprovementState, SchemaInfo
 
 
 def get_table_schema_prompt(query: str) -> str:
