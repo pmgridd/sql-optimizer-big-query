@@ -48,6 +48,8 @@ spec:
                 secretKeyRef:
                   name: sql-optimization-agents-secrets
                   key: GOOGLE_APPLICATION_CREDENTIALS
+            - name: GCP_MODE
+              value: WIF
 ---
 apiVersion: v1
 kind: Service
