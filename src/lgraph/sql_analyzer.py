@@ -1,12 +1,12 @@
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
-from src.utils import *
+from src.common.utils import *
 from langchain_google_genai import ChatGoogleGenerativeAI
 from typing import Optional
 from dataclasses import dataclass
-from src.models import SqlImprovementState, SchemaInfo
-from src.bq_client import BigQueryClient
+from src.lgraph.models import SqlImprovementState, SchemaInfo
+from src.lgraph.bq_client import BigQueryClient
 import asyncio
 import logging
 import random
@@ -47,7 +47,7 @@ class SqlAnalyzer:
             tables = await asyncio.gather(
                 *(fetch_metadata(table.strip()) for table in msg.content.split(","))
             )
-            return {"tabels": tables}
+            return {"tables": tables}
         else:
             raise RuntimeError("No tables found in the provided SQL query.")  # no retry by default
 
@@ -72,7 +72,7 @@ class SqlAnalyzer:
                     current_pattern[key.lower()] = value
         if current_pattern:
             antipatterns.append(current_pattern)
-        return {"antipattterns": antipatterns}
+        return {"antipatterns": antipatterns}
 
     async def get_previous_optimizations(self, state: SqlImprovementState) -> SqlImprovementState:
         return {}
@@ -81,7 +81,7 @@ class SqlAnalyzer:
         """Get optimization suggestions using a focused prompt."""
         try:
             msg = await self.llm.ainvoke(
-                get_suggestions_prompt(state["sql"], state["antipattterns"], state["tabels"])
+                get_suggestions_prompt(state["sql"], state["antipatterns"], state["tables"])
             )
             suggestions = []
             for line in msg.content.split("\n"):
@@ -98,7 +98,7 @@ class SqlAnalyzer:
         """Get optimization suggestions using a focused prompt."""
         try:
             msg = await self.llm.ainvoke(
-                get_optimized_sql_prompt(state["sql"], state["antipattterns"], state["tabels"])
+                get_optimized_sql_prompt(state["sql"], state["antipatterns"], state["tables"])
             )
 
             def clean_sql_string(sql_string):

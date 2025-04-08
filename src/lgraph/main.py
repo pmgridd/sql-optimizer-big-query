@@ -1,19 +1,15 @@
-import os
-import logging
-from src.env_setup import *
-from langchain_core.messages import HumanMessage
-from typing_extensions import TypedDict
-from src.sql_analyzer import *
-from src.bq_client import BigQueryClient
+from src.common.env_setup import *
+from src.lgraph.sql_analyzer import *
+from src.lgraph.bq_client import BigQueryClient
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import RetryPolicy
-from src.models import SqlImprovementState, SchemaInfo
+from src.lgraph.models import SqlImprovementState
 import base64
 from quart import Quart, render_template, request, jsonify
 import asyncio
 import signal
 
-credentials = setup_airplatform()
+credentials = setup_aiplatform()
 logger = logging.getLogger(__name__)
 llm = create_llm()
 bq_client = BigQueryClient(project_id=GCP_PROJECT, credentials=credentials)
@@ -33,7 +29,7 @@ def check_success(state: SqlImprovementState):
 workflow = StateGraph(SqlImprovementState)
 workflow.add_node("verify_sql", sql_analyzer.verify_and_run_original_sql)
 workflow.add_node("identify_tables", sql_analyzer.get_table_info)
-workflow.add_node("antipatterns", sql_analyzer.generate_info)
+workflow.add_node("find_antipatterns", sql_analyzer.generate_info)
 workflow.add_node("previous_optimizatons", sql_analyzer.get_previous_optimizations)
 workflow.add_node("suggestions", sql_analyzer.get_suggestions)
 workflow.add_node("optimize", sql_analyzer.get_optimized_query)
@@ -41,15 +37,15 @@ workflow.add_node("verify_optimized_sql", sql_analyzer.verify_and_run_optimized_
 
 workflow.add_edge(START, "verify_sql")
 workflow.add_edge("verify_sql", "identify_tables")
-workflow.add_edge("identify_tables", "antipatterns")
+workflow.add_edge("identify_tables", "find_antipatterns")
 workflow.add_edge(
-    "antipatterns", "previous_optimizatons"
+    "find_antipatterns", "previous_optimizatons"
 )  # use search for similar previous usecases
 workflow.add_edge("previous_optimizatons", "optimize")
 workflow.add_edge("previous_optimizatons", "suggestions")
 workflow.add_edge("optimize", "verify_optimized_sql")  # use tools to verify the performance
 workflow.add_conditional_edges(
-    "verify_optimized_sql", check_success, {"Continue": "antipatterns", "Finish": END}
+    "verify_optimized_sql", check_success, {"Continue": "find_antipatterns", "Finish": END}
 )
 
 app.chain = workflow.compile()
@@ -100,7 +96,7 @@ async def main():
     # Register signals to shutdown gracefully
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
     for s in signals:
-        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown(loop, signal=s)))
+        loop.add_signal_handler(s, lambda s: asyncio.create_task(shutdown(loop, signal=s)))
     try:
         await app.run_task(debug=True, port=8880, host="0.0.0.0")
     finally:
