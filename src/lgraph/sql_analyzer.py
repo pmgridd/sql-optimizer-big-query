@@ -111,8 +111,8 @@ class SqlAnalyzer:
             return {"optimized_sql": ""}
 
     async def verify_and_run_original_sql(self, state: SqlImprovementState) -> SqlImprovementState:
-        if random.random() < 0.6:  # 60% chance of failure
-            raise Exception("Simulated BigQuery query failure")  # retry 3 times by default
+        # if random.random() < 0.6:  # 60% chance of failure
+        #     raise Exception("Simulated BigQuery query failure")  # retry 3 times by default
         res = self.bq_client.execute_sql_query(state["sql"])
         return {"sql_res": self._evaluate_query(res)}
 
