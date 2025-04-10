@@ -113,6 +113,11 @@ class SqlAnalyzer:
     async def verify_and_run_original_sql(self, state: SqlImprovementState) -> SqlImprovementState:
         # if random.random() < 0.6:  # 60% chance of failure
         #     raise Exception("Simulated BigQuery query failure")  # retry 3 times by default
+        sql_to_run = state.get("optimized_sql") or state.get("sql")
+        if not sql_to_run:
+            raise ValueError("No SQL found to execute.")
+        state["sql"] = sql_to_run
+
         res = self.bq_client.execute_sql_query(state["sql"])
         return {"sql_res": self._evaluate_query(res)}
 
@@ -122,3 +127,36 @@ class SqlAnalyzer:
 
         results = await asyncio.gather(*[run_sql(state["optimized_sql"])])
         return {"optimized_sql_res": self._evaluate_query(results[0])}
+
+    async def llm_router(self, state: SqlImprovementState) -> str:
+        """
+        Use LLM to decide whether to continue optimizing or finish.
+        """
+        original_score = state.get("sql_res", {}).get("score", 0)
+        optimized_score = state.get("optimized_sql_res", {}).get("score", 0)
+        optimized_sql = state.get("optimized_sql", "")
+        original_sql = state.get("sql", "")
+
+        prompt = f"""
+        You are a SQL performance optimization agent.
+        The original SQL had a performance score of {original_score:.3f}.
+        The optimized SQL has a performance score of {optimized_score:.3f}.
+
+        Original SQL:
+        {original_sql}
+
+        Optimized SQL:
+        {optimized_sql}
+
+        Decide whether to CONTINUE optimizing or FINISH.
+        Respond with only one word: "Continue" or "Finish".
+        """
+
+        response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+        choice = response.content.strip().lower()
+        logger.info(f"sql decision: {choice}")
+
+        if "continue" in choice:
+            return "Continue"
+        else:
+            return "Finish"

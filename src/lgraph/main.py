@@ -8,22 +8,15 @@ import base64
 from quart import Quart, render_template, request, jsonify
 import asyncio
 import signal
+from langfuse.callback import CallbackHandler
 
 credentials = setup_aiplatform()
 logger = logging.getLogger(__name__)
-llm = create_llm()
+langfuse_callback = setup_langfuse_callback()
+llm = create_llm(callbacks=[langfuse_callback])
 bq_client = BigQueryClient(project_id=GCP_PROJECT, credentials=credentials)
 sql_analyzer = SqlAnalyzer(llm, bq_client)
 app = Quart(__name__)
-
-
-def check_success(state: SqlImprovementState):
-    """Gate check if sql succesfully optimized"""
-    # if (state['optimized_sql_res']['score'] <= state['sql_res']['score']):
-    #     return "Finish"
-    # else:
-    #     return "Continue"
-    return "Finish"
 
 
 workflow = StateGraph(SqlImprovementState)
@@ -45,10 +38,12 @@ workflow.add_edge("previous_optimizatons", "optimize")
 workflow.add_edge("previous_optimizatons", "suggestions")
 workflow.add_edge("optimize", "verify_optimized_sql")  # use tools to verify the performance
 workflow.add_conditional_edges(
-    "verify_optimized_sql", check_success, {"Continue": "find_antipatterns", "Finish": END}
+    "verify_optimized_sql",
+    sql_analyzer.llm_router,
+    {"Continue": "find_antipatterns", "Finish": END},
 )
 
-app.chain = workflow.compile()
+app.chain = workflow.compile().with_config({"callbacks": [langfuse_callback]})
 app.chain.retry_policy = RetryPolicy()
 
 
@@ -71,7 +66,15 @@ async def analyze():
 
     sql = SqlImprovementState(sql=sql.strip())
     try:
-        state = await app.chain.ainvoke(sql)
+        state = await app.chain.ainvoke(
+            sql,
+            config={
+                "metadata": {
+                    "langfuse_user_id": "user-id",
+                    "langfuse_session_id": "your-session-id",
+                }
+            },
+        )
         if "error" in state:
             return jsonify(state), 400
         return jsonify(state)

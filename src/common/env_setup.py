@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from google.cloud import aiplatform
 from google.oauth2 import service_account
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langfuse import Langfuse
+from langfuse.callback import CallbackHandler
 
 load_dotenv()
 
@@ -20,6 +22,26 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+
+def setup_langfuse() -> Langfuse:
+    langfuse = Langfuse(
+        secret_key=os.getenv("LANGFUSE_PRIVATE_KEY", "[NOT_FILLED]"),
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY", "[NOT_FILLED]"),
+        host=os.getenv("LANGFUSE_HOST", "[NOT_FILLED]"),
+    )
+    return langfuse
+
+
+def setup_langfuse_callback() -> CallbackHandler:
+    # langfuse = setup_langfuse()
+    langfuse_handler = CallbackHandler(
+        os.getenv("LANGFUSE_PUBLIC_KEY", "[NOT_FILLED]"),
+        os.getenv("LANGFUSE_PRIVATE_KEY", "[NOT_FILLED]"),
+        os.getenv("LANGFUSE_HOST", "[NOT_FILLED]"),
+        environment="default",
+    )
+    return langfuse_handler
 
 
 def setup_aiplatform():
@@ -41,7 +63,7 @@ def setup_aiplatform():
             return credentials
 
 
-def create_llm(model_name="gemini-2.0-flash", temperature=1.0):
+def create_llm(model_name="gemini-2.0-flash", temperature=1.0, callbacks=None):
     """
     Creates a Langchain ChatGoogleGenerativeAI LLM.
 
@@ -53,5 +75,5 @@ def create_llm(model_name="gemini-2.0-flash", temperature=1.0):
         ChatGoogleGenerativeAI: A Langchain ChatGoogleGenerativeAI LLM.
     """
 
-    llm = ChatGoogleGenerativeAI(model=model_name, temperature=temperature)
+    llm = ChatGoogleGenerativeAI(model=model_name, temperature=temperature, callbacks=callbacks)
     return llm
