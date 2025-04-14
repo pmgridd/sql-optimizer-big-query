@@ -1,0 +1,10 @@
+gradio==5.23.3
+smolagents[telemetry,litellm]==1.13.0
+google-cloud-bigquery==3.31.0
+sqlparse==0.5.3
+google-cloud-aiplatform==1.84.0
+langchain-google-genai==2.1.0
+agentops==0.4.6
+langsmith==0.3.31
+weave==0.51.43
+tracely==0.2.2
