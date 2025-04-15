@@ -2,6 +2,7 @@ from google.cloud import bigquery
 import time
 from src.lgraph.models import ColumnInfo, SchemaInfo
 import logging
+from langchain.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class BigQueryClient:
         """
         self.client = bigquery.Client(project=project_id, credentials=credentials)
 
-    def execute_sql_query(self, sql: str) -> dict:
+    async def execute_sql_query(self, sql: str) -> dict:
         job_config = bigquery.QueryJobConfig()
         job_config.use_query_cache = False
         start_time = time.time()
@@ -44,7 +45,7 @@ class BigQueryClient:
         }
         return metadata
 
-    def get_table_metadata(self, table_id: str) -> SchemaInfo:
+    async def get_table_metadata(self, table_id: str) -> SchemaInfo:
         """
         Get metadata about a BigQuery table, formatted as a SchemaInfo object.
 
@@ -72,3 +73,19 @@ class BigQueryClient:
         )
 
         return schema_info
+
+    def evaluate_query(self, results: dict) -> dict:
+        score = 0
+        weights = {
+            "execution_time_seconds": 0.40,
+            "total_bytes_processed": 0.30,
+            "total_bytes_billed": 0.15,
+            "cache_hit": 0.10,
+            "num_dml_affected_rows": 0.05,
+        }
+        score += (1 / (1 + results["execution_time_seconds"])) * weights["execution_time_seconds"]
+        score += (1 / (1 + results["total_bytes_processed"])) * weights["total_bytes_processed"]
+        score += (1 / (1 + results["total_bytes_billed"])) * weights["total_bytes_billed"]
+        score += (1 if results["cache_hit"] else 0) * weights["cache_hit"]
+        score += (results["num_dml_affected_rows"] / 1000) * weights["num_dml_affected_rows"]
+        return {"score": score, "metadata": results}

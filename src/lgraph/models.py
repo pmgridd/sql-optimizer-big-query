@@ -29,3 +29,5 @@ class SqlImprovementState(TypedDict):
     sql_res: dict
     optimized_sql_res: dict
     error: Optional[str]
+    exectution_plan: list[str]
+    attempt: int

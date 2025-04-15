@@ -34,8 +34,9 @@ workflow.add_edge("identify_tables", "find_antipatterns")
 workflow.add_edge(
     "find_antipatterns", "previous_optimizatons"
 )  # use search for similar previous usecases
+workflow.add_edge("find_antipatterns", "suggestions")
+workflow.add_edge("suggestions", "optimize")
 workflow.add_edge("previous_optimizatons", "optimize")
-workflow.add_edge("previous_optimizatons", "suggestions")
 workflow.add_edge("optimize", "verify_optimized_sql")  # use tools to verify the performance
 workflow.add_conditional_edges(
     "verify_optimized_sql",

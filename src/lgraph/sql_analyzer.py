@@ -20,22 +20,6 @@ class SqlAnalyzer:
         self.bq_client = bq_client
         pass
 
-    def _evaluate_query(self, results: dict) -> dict:
-        score = 0
-        weights = {
-            "execution_time_seconds": 0.40,
-            "total_bytes_processed": 0.30,
-            "total_bytes_billed": 0.15,
-            "cache_hit": 0.10,
-            "num_dml_affected_rows": 0.05,
-        }
-        score += (1 / (1 + results["execution_time_seconds"])) * weights["execution_time_seconds"]
-        score += (1 / (1 + results["total_bytes_processed"])) * weights["total_bytes_processed"]
-        score += (1 / (1 + results["total_bytes_billed"])) * weights["total_bytes_billed"]
-        score += (1 if results["cache_hit"] else 0) * weights["cache_hit"]
-        score += (results["num_dml_affected_rows"] / 1000) * weights["num_dml_affected_rows"]
-        return {"score": score, "metadata": results}
-
     async def get_table_info(self, state: SqlImprovementState) -> SqlImprovementState:
         """First Improvement"""
 
@@ -98,7 +82,9 @@ class SqlAnalyzer:
         """Get optimization suggestions using a focused prompt."""
         try:
             msg = await self.llm.ainvoke(
-                get_optimized_sql_prompt(state["sql"], state["antipatterns"], state["tables"])
+                get_optimized_sql_prompt(
+                    state["sql"], state["improvements"], state["antipatterns"], state["tables"]
+                )
             )
 
             def clean_sql_string(sql_string):
@@ -119,14 +105,14 @@ class SqlAnalyzer:
         state["sql"] = sql_to_run
 
         res = self.bq_client.execute_sql_query(state["sql"])
-        return {"sql_res": self._evaluate_query(res)}
+        return {"sql_res": self.bq_client.evaluate_query(res)}
 
     async def verify_and_run_optimized_sql(self, state: SqlImprovementState) -> SqlImprovementState:
         async def run_sql(sql):
             return await asyncio.to_thread(self.bq_client.execute_sql_query, sql)
 
         results = await asyncio.gather(*[run_sql(state["optimized_sql"])])
-        return {"optimized_sql_res": self._evaluate_query(results[0])}
+        return {"optimized_sql_res": self.bq_client.evaluate_query(results[0])}
 
     async def llm_router(self, state: SqlImprovementState) -> str:
         """

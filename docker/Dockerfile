@@ -10,4 +10,5 @@ RUN pip install --no-cache-dir pipenv  \
 
 COPY ./src /app/src
 
-ENTRYPOINT ["python", "-m", "src.lgraph.main"]
+ENTRYPOINT ["python", "-m", "src.lgraph.main_dynamic"]
+# ENTRYPOINT ["python", "-m", "src.lgraph.main"]
