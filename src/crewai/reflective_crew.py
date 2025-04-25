@@ -3,8 +3,8 @@ import json
 
 from src.crewai.models import (
     QueryStats,
-    QueryInfo,
-    QueryAnalysis,
+    EvaluationSnapshot,
+    ReflectionDecision,
     QuerySuggestions,
     BestQueryChoice,
     ImprovementsAnalysis,
@@ -17,9 +17,9 @@ from crewai.project import CrewBase, agent, task, crew
 
 
 @CrewBase
-class SqlAnalysisCrew:
+class ReflectiveLoopCrew:
     agents_config = "config/agents.yaml"
-    tasks_config = "config/tasks.yaml"
+    tasks_config = "config/reflective_loop.yaml"
     # llm = LLM(
     #     model="openai/gpt-4o",
     #     temperature=0.1,
@@ -43,51 +43,42 @@ class SqlAnalysisCrew:
         )
 
     @task
-    def sql_query_analysis(self) -> Task:
-        return Task(config=self.tasks_config["sql_query_analysis"], output_pydantic=QueryInfo)
-
-    @task
-    def sql_query_execution(self) -> Task:
+    def execute_initial_query(self) -> Task:
         return Task(
-            config=self.tasks_config["sql_query_execution"],
-            output_pydantic=QueryStats,
+            config=self.tasks_config["execute_initial_query"], output_pydantic=EvaluationSnapshot
         )
 
     @task
-    def identify_antipatterns(self) -> Task:
+    def generate_improvements_round(self) -> Task:
         return Task(
-            config=self.tasks_config["identify_antipatterns"],
-            output_pydantic=QueryAnalysis,
+            config=self.tasks_config["generate_improvements_round"],
+            output_pydantic=QuerySuggestions,
         )
 
     @task
-    def suggest_optimizations(self) -> Task:
+    def benchmark_improvements_round(self) -> Task:
         return Task(
-            config=self.tasks_config["suggest_optimizations"],
+            config=self.tasks_config["benchmark_improvements_round"],
+            output_pydantic=ImprovementsAnalysis,
+        )
+
+    @task
+    def reflect_and_synthesize_round(self) -> Task:
+        return Task(
+            config=self.tasks_config["reflect_and_synthesize_round"],
             context=[
-                self.sql_query_analysis(),
-                self.sql_query_execution(),
-                self.identify_antipatterns(),
+                self.generate_improvements_round(),
+                self.benchmark_improvements_round(),
             ],
             output_pydantic=QuerySuggestions,
         )
 
     @task
-    def execute_improvement_variants(self) -> Task:
+    def finalize_best_query(self) -> Task:
         return Task(
-            config=self.tasks_config["execute_improvement_variants"],
-            context=[self.suggest_optimizations()],
-            output_pydantic=ImprovementsAnalysis,
-        )
-
-    @task
-    def suggest_best_query(self) -> Task:
-        return Task(
-            config=self.tasks_config["suggest_best_query"],
+            config=self.tasks_config["finalize_best_query"],
             context=[
-                self.suggest_optimizations(),
-                self.execute_improvement_variants(),
-                self.sql_query_execution(),
+                self.reflect_and_synthesize_round(),
             ],
             output_pydantic=BestQueryChoice,
         )

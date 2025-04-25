@@ -1,0 +1,71 @@
+sql_query_execution:
+  description: >
+    You are given an SQL query: {sql_query}
+
+    Execute the given SQL query in BigQuery using QueryTool. Collect and return performance metrics
+    such as total_bytes_processed, total_bytes_billed, billing_tier, execution_time_seconds,
+    cache_hit, and num_dml_affected_rows.
+
+  expected_output: >
+    Query execution results should be returned as a single QueryStats object.
+
+  agent: sql_developer
+
+sql_query_analysis:
+  description: >
+    You are given an SQL query: {sql_query}
+
+    Please analyze it and parse out any references to tables, then gather relevant schema info
+    (BigQuery table reference consists of 3 parts: gcp_project_id, dataset_id, table_id separated
+    by dots.) for each table such as column names and types, row counts, and approximate table
+    size using the MetadataTool.
+
+  expected_output: >
+    Return a QueryInfo object containing a list of SchemaInfo objects for all tables referenced in the query.
+
+  agent: sql_developer
+
+suggest_optimizations:
+  description: >
+    Based on the tables' schema info, the original SQL query, and query usage stats,
+    propose a set of potential improvements or modifications to improve readability, reduce cost,
+    speed up execution, or follow BigQuery best practices. Your improvement strategies should STRICTLY be analytical,
+    and never use any additional assumptions or require more information to improve the query.
+
+    - Proposed query should always be returning an equivalent data compared to the results returned
+    by the original query.
+    - Same set of columns must be returned
+    - Results ordering if the original query has an ORDER BY clause MUST NOT be changed.
+    - You can suggest approximations for efficiency where appropriate.
+    - DO NOT ASSUME anything about the query.
+    - If the query can be sped up with filtering, and you haven't been provided with any
+    additional information to suggest the filter, do not apply any filters.
+
+    Do not suggest improvements which may contradict the conditions above.
+
+  expected_output: >
+    Return a QuerySuggestions object with the original sql query and one or more improved query candidates,
+    implemented in valid BigQuery SQL.
+
+  agent: sql_developer
+
+execute_improvement_variants:
+  description: >
+    For each ProposedImprovement in QuerySuggestions, run the "improved_sql" and collect
+    QueryStats for each.
+
+  expected_output: >
+    Return a ImprovementsAnalysis object containing a list of QueryStats objects, each describing
+    the performance of one variant.
+
+  agent: sql_developer
+
+suggest_best_query:
+  description: >
+    Given the QueryStats for the original query plus a list of QueryStats for improved queries,
+    choose the best one.
+
+  expected_output: >
+    Return a BestQueryChoice object with "chosen_sql" and a justification.
+
+  agent: sql_developer

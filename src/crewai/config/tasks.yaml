@@ -306,9 +306,22 @@ identify_antipatterns:
 
 suggest_optimizations:
   description: >
-    Based on the tables' schema info, the original SQL query, the identified antipatterns, and query usage stats,
-    propose a set of potential improvements or modifications to reduce cost, speed up execution,
-    or follow BigQuery best practices.
+    Based on the tables' schema info, the original SQL query, and query usage stats,
+    propose a set of potential improvements or modifications to improve readability, reduce cost,
+    speed up execution, or follow BigQuery best practices. Your improvement strategies should STRICTLY be analytical,
+    and never use any additional assumptions or require more information to improve the query.
+
+    - Proposed query should always be returning an equivalent data compared to the results returned
+    by the original query.
+    - Same set of columns must be returned
+    - Results ordering if the original query has an ORDER BY clause MUST NOT be changed.
+    - You can suggest approximations for efficiency where appropriate.
+    - DO NOT ASSUME anything about the query.
+    - If the query can be sped up with filtering, and you haven't been provided with any
+    additional information to suggest the filter, do not apply any filters.
+
+    Do not suggest improvements which may contradict the conditions above.
+
 
   expected_output: >
     Return a QuerySuggestions object with the original sql query and one or more improved query candidates,

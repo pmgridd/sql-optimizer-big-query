@@ -1,3 +1,5 @@
+import weave
+
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -34,6 +36,9 @@ class QueryTool(BaseTool):
         super().__init__(**kwargs)
         self._bq_client = bq_client
 
+    # @weave.op(name="metadata-tool") annotating internal part of the
+    # tool execution enables to trace all tool calling attempts correctly
+    # typically it is not done out of the box by observability frameworks.
     def _run(self, sql: str) -> QueryStats:
         return self._bq_client.get_sql_query_stats(sql)
 
@@ -52,5 +57,6 @@ class MetadataTool(BaseTool):
         super().__init__(**kwargs)
         self._bq_client = bq_client
 
+    # @weave.op(name="metadata-tool")
     def _run(self, dataset, table: str) -> SchemaInfo:
         return self._bq_client.get_table_metadata(GCP_PROJECT, dataset, table)

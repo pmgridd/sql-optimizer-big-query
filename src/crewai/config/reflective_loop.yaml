@@ -1,0 +1,43 @@
+execute_initial_query:
+  description: >
+    Run the original SQL ({sql_query}) in BigQuery via QueryTool.
+    Collect QueryStats, then gather schema metadata for every table referenced with MetadataTool,
+    returning a single EvaluationSnapshot.
+  expected_output: EvaluationSnapshot
+  agent: sql_developer
+
+generate_improvements_round:
+  description: >
+    Using the latest EvaluationSnapshot plus all prior ReflectionDecision insights,
+    propose 1‑N improved query candidates that fully satisfy the optimisation
+    constraints (equivalent results, same columns, order preserved, no
+    unrealistic filters). Return QuerySuggestions.
+  expected_output: QuerySuggestions
+  agent: sql_developer
+
+benchmark_improvements_round:
+  description: >
+    Execute every improved_sql in QuerySuggestions. Return an ImprovementsAnalysis
+    with QueryStats for each candidate.
+  expected_output: ImprovementsAnalysis
+  agent: sql_developer
+
+reflect_and_synthesize_round:
+  description: >
+    Compare ImprovementsAnalysis to the current best QueryStats.  Summarise
+    which ideas improved cost/performance and which failed; optionally combine or
+    tweak candidates.  If any new candidate beats the best by a meaningful
+    margin (e.g. bytes billed reduced, execution time lower), set
+    continue_iterating = true and supply a new best_stats / best_sql and
+    insights for the next round.  Otherwise set continue_iterating = false.
+    Return a ReflectionDecision.
+  expected_output: ReflectionDecision
+  agent: sql_developer
+
+finalize_best_query:
+  description: >
+    When ReflectionDecision.continue_iterating is false OR a max‑iteration
+    limit is reached, output a BestQueryChoice containing the final best SQL
+    and a succinct justification.
+  expected_output: BestQueryChoice
+  agent: sql_developer

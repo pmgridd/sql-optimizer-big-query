@@ -2,15 +2,29 @@ import signal
 import asyncio
 import logging
 
+# import openlit
+import weave
+
 from quart import Quart, request, jsonify
 from src.crewai.analyze_sql_flow import SqlAnalysisFlow
 from src.crewai.sql_optimizer_crew import SqlAnalysisCrew
+from src.crewai.reflective_crew import ReflectiveLoopCrew
+from src.crewai.sql_optimizer_planning_crew import SqlAnalysisPlanningCrew
 from src.common.env_setup import setup_aiplatform
+# from phoenix.otel import register
 
 
 credentials = setup_aiplatform()
 app = Quart(__name__)
 logger = logging.getLogger(__name__)
+# openlit.init() - uncomment to use LangFuse instrumentation
+
+# tracer_provider = register(
+#   project_name="sql-analyzer",
+#   auto_instrument=True,
+# )
+
+weave.init(project_name="sql-optimizer-crew")
 
 
 @app.route("/analyze", methods=["GET"])
@@ -36,6 +50,34 @@ async def analyze_crew():
         return jsonify({"error": "SQL query cannot be empty!"}), 400
     try:
         crew_output = await SqlAnalysisCrew().crew().kickoff_async(inputs={"sql_query": sql})
+        return crew_output.pydantic.json()
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/analyze_reflective_loop", methods=["GET"])
+async def analyze_reflective_loop():
+    sql = request.args.get("sql")
+    if not sql or not sql.strip():
+        return jsonify({"error": "SQL query cannot be empty!"}), 400
+    try:
+        crew_output = await ReflectiveLoopCrew().crew().kickoff_async(inputs={"sql_query": sql})
+        return crew_output.pydantic.json()
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/analyze_with_planning", methods=["GET"])
+async def analyze_with_planning():
+    sql = request.args.get("sql")
+    if not sql or not sql.strip():
+        return jsonify({"error": "SQL query cannot be empty!"}), 400
+    try:
+        crew_output = (
+            await SqlAnalysisPlanningCrew().crew().kickoff_async(inputs={"sql_query": sql})
+        )
         return crew_output.pydantic.json()
     except Exception as e:
         logger.exception(e)

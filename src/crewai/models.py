@@ -80,6 +80,22 @@ class QuerySuggestions(BaseModel):
     improvements: list[ProposedImprovement]
 
 
+class EvaluationSnapshot(BaseModel):
+    """All artefacts from one round."""
+
+    query_stats: QueryStats
+    query_info: QueryInfo
+
+
+class ReflectionDecision(BaseModel):
+    """Reflection result that drives the loop."""
+
+    continue_iterating: bool
+    best_stats: QueryStats
+    best_sql: str
+    insights: str
+
+
 class ImprovementsAnalysis(BaseModel):
     """
     Holds a list of proposed improved query candidates and execution stats for each.

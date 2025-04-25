@@ -4,7 +4,6 @@ import json
 from src.crewai.models import (
     QueryStats,
     QueryInfo,
-    QueryAnalysis,
     QuerySuggestions,
     BestQueryChoice,
     ImprovementsAnalysis,
@@ -17,14 +16,15 @@ from crewai.project import CrewBase, agent, task, crew
 
 
 @CrewBase
-class SqlAnalysisCrew:
+class SqlAnalysisPlanningCrew:
     agents_config = "config/agents.yaml"
-    tasks_config = "config/tasks.yaml"
-    # llm = LLM(
-    #     model="openai/gpt-4o",
-    #     temperature=0.1,
-    # )
+    tasks_config = "config/planning_tasks.yaml"
     llm = LLM(
+        model="gemini/gemini-2.0-flash",
+        temperature=0.1,
+        vertex_credentials=json.loads(os.getenv("GOOGLE_APPLICATION_CREDENTIALS")),
+    )
+    manager_llm = LLM(
         model="gemini/gemini-2.0-flash",
         temperature=0.1,
         vertex_credentials=json.loads(os.getenv("GOOGLE_APPLICATION_CREDENTIALS")),
@@ -43,10 +43,6 @@ class SqlAnalysisCrew:
         )
 
     @task
-    def sql_query_analysis(self) -> Task:
-        return Task(config=self.tasks_config["sql_query_analysis"], output_pydantic=QueryInfo)
-
-    @task
     def sql_query_execution(self) -> Task:
         return Task(
             config=self.tasks_config["sql_query_execution"],
@@ -54,21 +50,13 @@ class SqlAnalysisCrew:
         )
 
     @task
-    def identify_antipatterns(self) -> Task:
-        return Task(
-            config=self.tasks_config["identify_antipatterns"],
-            output_pydantic=QueryAnalysis,
-        )
+    def sql_query_analysis(self) -> Task:
+        return Task(config=self.tasks_config["sql_query_analysis"], output_pydantic=QueryInfo)
 
     @task
     def suggest_optimizations(self) -> Task:
         return Task(
             config=self.tasks_config["suggest_optimizations"],
-            context=[
-                self.sql_query_analysis(),
-                self.sql_query_execution(),
-                self.identify_antipatterns(),
-            ],
             output_pydantic=QuerySuggestions,
         )
 
@@ -76,7 +64,6 @@ class SqlAnalysisCrew:
     def execute_improvement_variants(self) -> Task:
         return Task(
             config=self.tasks_config["execute_improvement_variants"],
-            context=[self.suggest_optimizations()],
             output_pydantic=ImprovementsAnalysis,
         )
 
@@ -85,9 +72,7 @@ class SqlAnalysisCrew:
         return Task(
             config=self.tasks_config["suggest_best_query"],
             context=[
-                self.suggest_optimizations(),
                 self.execute_improvement_variants(),
-                self.sql_query_execution(),
             ],
             output_pydantic=BestQueryChoice,
         )
@@ -97,6 +82,7 @@ class SqlAnalysisCrew:
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
-            process=Process.sequential,
+            planning=True,
             verbose=True,
+            planning_llm=self.manager_llm,
         )
